@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Modelo Canvas - Evocation Coffee</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #111827;
+      --accent: #f97316;
+      --accent-soft: rgba(249,115,22,0.12);
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border: #1f2933;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-soft: 0 18px 35px rgba(0,0,0,0.45);
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #f9fafb;
+    }
+
+    header h1 span {
+      color: var(--accent);
+    }
+
+    header p {
+      margin-top: 8px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .canvas-wrapper {
+      background: rgba(15,23,42,0.85);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148,163,184,0.18);
+      padding: 18px 18px 22px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(10px);
+    }
+
+    .canvas-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 12px;
+    }
+
+    .canvas-title-row h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-muted);
+    }
+
+    .canvas-title-row .brand {
+      font-weight: 600;
+      color: #f9fafb;
+    }
+
+    .canvas-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: auto;
+    }
+
+    /* Card base */
+    .canvas-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 10px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(249,115,22,0.08), transparent 55%);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .card-tag {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+      background: rgba(15,23,42,0.9);
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid rgba(249,115,22,0.25);
+    }
+
+    .card-content {
+      font-size: 0.75rem;
+      color: var(--text);
+      line-height: 1.35;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-content ul {
+      list-style: none;
+    }
+
+    .card-content li {
+      position: relative;
+      padding-left: 11px;
+      margin-bottom: 3px;
+    }
+
+    .card-content li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--accent);
+      font-size: 0.78rem;
+    }
+
+    /* Grid layout específica tipo canvas */
+    .c-segmentos {
+      grid-column: 1 / span 1;
+      grid-row: 1 / span 2;
+    }
+
+    .c-propuesta {
+      grid-column: 2 / span 2;
+      grid-row: 1 / span 1;
+    }
+
+    .c-relacion {
+      grid-column: 2 / span 1;
+      grid-row: 2 / span 1;
+    }
+
+    .c-canales {
+      grid-column: 3 / span 1;
+      grid-row: 2 / span 1;
+    }
+
+    .c-recursos {
+      grid-column: 4 / span 1;
+      grid-row: 1 / span 2;
+    }
+
+    .c-actividades {
+      grid-column: 1 / span 2;
+      grid-row: 3 / span 1;
+    }
+
+    .c-socios {
+      grid-column: 3 / span 2;
+      grid-row: 3 / span 1;
+    }
+
+    .c-costos {
+      grid-column: 1 / span 2;
+      grid-row: 4 / span 1;
+    }
+
+    .c-ingresos {
+      grid-column: 3 / span 2;
+      grid-row: 4 / span 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 880px) {
+      .canvas-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .c-segmentos,
+      .c-propuesta,
+      .c-relacion,
+      .c-canales,
+      .c-recursos,
+      .c-actividades,
+      .c-socios,
+      .c-costos,
+      .c-ingresos {
+        grid-column: auto;
+        grid-row: auto;
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 18px 10px 32px;
+      }
+      .canvas-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      header p {
+        font-size: 0.85rem;
+      }
+      .canvas-card {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Modelo de Negocio · Canvas
+      </div>
+      <h1><span>Evocation</span> Coffee</h1>
+      <p>Resumen visual del modelo Canvas aplicado al negocio de consultoría cafetero.</p>
+    </header>
+
+    <section class="canvas-wrapper">
+      <div class="canvas-title-row">
+        <h2>Business Model Canvas</h2>
+        <div class="brand">Evocation Coffee</div>
+      </div>
+
+      <div class="canvas-grid">
+        <!-- Segmentos de clientes -->
+        <article class="canvas-card c-segmentos">
+          <div class="card-header">
+            <div class="card-title">Segmentos de clientes</div>
+            <span class="card-tag">Clientes</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Vecinos del barrio y clientes habituales.</li>
+              <li>Trabajadores y estudiantes de la zona.</li>
+              <li>Personas que compran abarrotes y snacks rápidos.</li>
+              <li>Amantes del café artesanal y bebidas calientes.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Propuesta de valor -->
+        <article class="canvas-card c-propuesta">
+          <div class="card-header">
+            <div class="card-title">Propuesta de valor</div>
+            <span class="card-tag">Valor</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Café artesanal accesible y de buena calidad.</li>
+              <li>Disponibilidad continua gracias a inventario controlado.</li>
+              <li>Precios competitivos según análisis de proveedores.</li>
+              <li>Atención cercana, rápida y personalizada.</li>
+              <li>Portafolio optimizado a productos de alta rotación.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Relación con clientes -->
+        <article class="canvas-card c-relacion">
+          <div class="card-header">
+            <div class="card-title">Relación con clientes</div>
+            <span class="card-tag">Vínculo</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Trato directo y humano.</li>
+              <li>Recordación de gustos y hábitos.</li>
+              <li>Promociones simples y combos.</li>
+              <li>Comunicación cercana por redes o WhatsApp.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Canales -->
+        <article class="canvas-card c-canales">
+          <div class="card-header">
+            <div class="card-title">Canales</div>
+            <span class="card-tag">Contacto</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Punto de venta físico.</li>
+              <li>Boca a boca y comunidad local.</li>
+              <li>Redes sociales (Facebook, Instagram).</li>
+              <li>WhatsApp para consulta o pedidos rápidos.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Recursos clave -->
+        <article class="canvas-card c-recursos">
+          <div class="card-header">
+            <div class="card-title">Recursos clave</div>
+            <span class="card-tag">Activos</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Local, equipos de café e inventario físico.</li>
+              <li>Experiencia y criterio del dueño.</li>
+              <li>Datos de ventas, rotación e inventario.</li>
+              <li>Herramientas tecnológicas (BPMS, nube, WhatsApp).</li>
+              <li>Identidad de marca Evocation Coffee.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Actividades clave -->
+        <article class="canvas-card c-actividades">
+          <div class="card-header">
+            <div class="card-title">Actividades clave</div>
+            <span class="card-tag">Operación</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Gestión de compras y negociación con proveedores.</li>
+              <li>Control y reposición de inventario.</li>
+              <li>Preparación y servicio de café y refrigerios.</li>
+              <li>Atención al cliente y experiencia en el punto de venta.</li>
+              <li>Análisis de margen, rotación y punto de equilibrio.</li>
+              <li>Difusión básica en redes y comunidad.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Socios clave -->
+        <article class="canvas-card c-socios">
+          <div class="card-header">
+            <div class="card-title">Socios clave</div>
+            <span class="card-tag">Alianzas</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Proveedores de café, panadería y abarrotes.</li>
+              <li>Cadenas como D1, Ara y Alkosto para comparación.</li>
+              <li>Servicios de transporte o mensajería local.</li>
+              <li>Plataformas tecnológicas y herramientas en la nube.</li>
+              <li>Comunidad del barrio y clientes frecuentes.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Estructura de costos -->
+        <article class="canvas-card c-costos">
+          <div class="card-header">
+            <div class="card-title">Estructura de costos</div>
+            <span class="card-tag">Costos</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Costos fijos: arriendo, servicios, internet, impuestos.</li>
+              <li>Costos variables: inventario, insumos, panadería.</li>
+              <li>Costos tecnológicos: BPMS y herramientas digitales.</li>
+              <li>Gastos de publicidad local y mantenimiento básico.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- Fuentes de ingreso -->
+        <article class="canvas-card c-ingresos">
+          <div class="card-header">
+            <div class="card-title">Fuentes de ingreso</div>
+            <span class="card-tag">Ingresos</span>
+          </div>
+          <div class="card-content">
+            <ul>
+              <li>Venta de café y bebidas calientes.</li>
+              <li>Venta de abarrotes y productos de consumo diario.</li>
+              <li>Venta de snacks, panadería y productos de impulso.</li>
+              <li>Productos con mayor margen y combos.</li>
+              <li>Potenciales ingresos por pedidos recurrentes o fidelización.</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
